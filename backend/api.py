@@ -501,11 +501,27 @@ def generar_documento():
 @app.route("/", methods=["GET"])
 def index():
     try:
-        frontend_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "frontend")
-        return send_from_directory(frontend_path, "index.html")
+        # En Vercel, el archivo está en backend/../frontend
+        # En local, también está en backend/../frontend
+        script_dir = os.path.dirname(os.path.abspath(__file__))
+        project_root = os.path.dirname(script_dir)
+        frontend_dir = os.path.join(project_root, "frontend")
+
+        logger.info("Buscando index.html en: %s", frontend_dir)
+
+        if not os.path.exists(frontend_dir):
+            logger.error("Directorio frontend no existe: %s", frontend_dir)
+            return jsonify({"error": "Frontend directory not found"}), 500
+
+        index_path = os.path.join(frontend_dir, "index.html")
+        if not os.path.exists(index_path):
+            logger.error("index.html no existe: %s", index_path)
+            return jsonify({"error": "index.html not found"}), 500
+
+        return send_from_directory(frontend_dir, "index.html")
     except Exception as e:
         logger.error("Error sirviendo index.html: %s", e)
-        return jsonify({"error": "No se pudo cargar index.html"}), 500
+        return jsonify({"error": f"Error: {str(e)}"}), 500
 
 
 if __name__ == "__main__":
