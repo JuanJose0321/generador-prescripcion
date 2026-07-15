@@ -14,7 +14,11 @@ from docx.oxml.ns import qn
 from docx.text.paragraph import Paragraph
 from dotenv import load_dotenv
 
-load_dotenv()
+# Cargar .env solo si existe (en Vercel no existe)
+try:
+    load_dotenv()
+except:
+    pass
 
 logger = logging.getLogger("verificador_ia")
 
