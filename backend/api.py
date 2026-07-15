@@ -9,7 +9,7 @@ import logging
 import os
 from datetime import datetime
 
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, send_from_directory
 from flask_cors import CORS
 from docx import Document
 from docx.oxml.ns import qn
@@ -500,7 +500,12 @@ def generar_documento():
 
 @app.route("/", methods=["GET"])
 def index():
-    return jsonify({"status": "OK"}), 200
+    try:
+        frontend_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "frontend")
+        return send_from_directory(frontend_path, "index.html")
+    except Exception as e:
+        logger.error("Error sirviendo index.html: %s", e)
+        return jsonify({"error": "No se pudo cargar index.html"}), 500
 
 
 if __name__ == "__main__":
