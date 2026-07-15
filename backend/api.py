@@ -7,6 +7,7 @@ import base64
 import io
 import logging
 import os
+import sys
 from datetime import datetime
 
 from flask import Flask, jsonify, request, send_from_directory
@@ -14,6 +15,9 @@ from flask_cors import CORS
 from docx import Document
 from docx.oxml.ns import qn
 from docx.text.paragraph import Paragraph
+
+# Agregar ruta actual al path para que encuentre verificador_ia
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from verificador_ia import verificar_documento
 
