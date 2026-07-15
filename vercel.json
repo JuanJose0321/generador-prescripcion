@@ -15,8 +15,5 @@
       "src": "/(.*)",
       "dest": "backend/api.py"
     }
-  ],
-  "env": {
-    "GROK_API_KEY": "@grok_api_key"
-  }
+  ]
 }
