@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generador de Prescripciones Fiscales — Ayuntamiento de Cuernavaca</title>
+    <style>
+        :root {
+            --navy: #003366;
+            --navy-dark: #00264d;
+            --gray: #666666;
+            --light-gray: #cccccc;
+            --bg-light: #f4f6f8;
+            --white: #ffffff;
+            --success-bg: #e8f5e9;
+            --success-text: #1b5e20;
+            --success-border: #a5d6a7;
+            --error-bg: #fdecea;
+            --error-text: #b71c1c;
+            --error-border: #f1a9a0;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            font-size: 16px;
+        }
+
+        body {
+            font-family: Arial, 'Segoe UI', sans-serif;
+            background: var(--bg-light);
+            color: #1a1a1a;
+            line-height: 1.5;
+            padding: 24px 16px;
+        }
+
+        .page {
+            max-width: 800px;
+            margin: 0 auto;
+            background: var(--white);
+            border: 1px solid var(--light-gray);
+        }
+
+        .page-header {
+            background: var(--navy);
+            color: var(--white);
+            padding: 32px 24px;
+            text-align: center;
+        }
+
+        .page-header h1 {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .page-header p {
+            font-size: 17px;
+            color: #cfe0f0;
+        }
+
+        .content {
+            padding: 32px 24px;
+        }
+
+        .instructions {
+            background: var(--bg-light);
+            border-left: 4px solid var(--navy);
+            padding: 16px 18px;
+            margin-bottom: 32px;
+            font-size: 16px;
+            color: #333333;
+            line-height: 1.6;
+        }
+
+        .instructions strong {
+            color: var(--navy);
+        }
+
+        .section {
+            margin-bottom: 36px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid var(--light-gray);
+        }
+
+        .section:last-of-type {
+            border-bottom: none;
+        }
+
+        .section h2 {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--navy);
+            margin-bottom: 20px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid var(--navy);
+        }
+
+        .field {
+            display: flex;
+            flex-direction: column;
+            margin-bottom: 24px;
+        }
+
+        .field:last-child {
+            margin-bottom: 0;
+        }
+
+        label {
+            font-size: 17px;
+            font-weight: 700;
+            color: #1a1a1a;
+            margin-bottom: 8px;
+        }
+
+        input[type="text"],
+        input[type="date"],
+        select {
+            width: 100%;
+            padding: 14px 16px;
+            font-size: 17px;
+            font-family: inherit;
+            color: #1a1a1a;
+            border: 2px solid var(--light-gray);
+            border-radius: 4px;
+            background: var(--white);
+            min-height: 52px;
+        }
+
+        select {
+            cursor: pointer;
+        }
+
+        input[type="text"]:focus,
+        input[type="date"]:focus,
+        select:focus {
+            outline: 3px solid var(--navy);
+            outline-offset: 1px;
+            border-color: var(--navy);
+        }
+
+        .help-text {
+            font-size: 14px;
+            color: var(--gray);
+            margin-top: 8px;
+        }
+
+        .actions {
+            margin-top: 40px;
+            padding-top: 24px;
+            border-top: 1px solid var(--light-gray);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 16px;
+        }
+
+        button {
+            font-family: inherit;
+            font-size: 18px;
+            font-weight: 700;
+            border-radius: 4px;
+            cursor: pointer;
+            border: 2px solid transparent;
+        }
+
+        .btn-generate {
+            background: var(--navy);
+            color: var(--white);
+            padding: 18px 48px;
+            width: 100%;
+            max-width: 420px;
+        }
+
+        .btn-generate:hover:not(:disabled),
+        .btn-generate:focus:not(:disabled) {
+            background: var(--navy-dark);
+        }
+
+        .btn-generate:disabled {
+            background: var(--light-gray);
+            color: #888888;
+            cursor: not-allowed;
+        }
+
+        .btn-reset {
+            background: var(--white);
+            color: var(--navy);
+            border-color: var(--navy);
+            padding: 14px 40px;
+            width: 100%;
+            max-width: 420px;
+        }
+
+        .btn-reset:hover {
+            background: var(--bg-light);
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            margin-top: 24px;
+            padding: 16px;
+            font-size: 17px;
+            font-weight: 700;
+            color: var(--navy);
+            background: var(--bg-light);
+            border: 1px solid var(--light-gray);
+        }
+
+        .message {
+            display: none;
+            margin-top: 24px;
+            padding: 16px 18px;
+            font-size: 17px;
+            font-weight: 700;
+            border: 2px solid transparent;
+        }
+
+        .message.success {
+            display: block;
+            background: var(--success-bg);
+            color: var(--success-text);
+            border-color: var(--success-border);
+        }
+
+        .message.error {
+            display: block;
+            background: var(--error-bg);
+            color: var(--error-text);
+            border-color: var(--error-border);
+        }
+
+        .verification-box {
+            display: none;
+            margin-top: 24px;
+            padding: 20px;
+            border: 2px solid transparent;
+            font-size: 16px;
+        }
+
+        .verification-box.ok {
+            background: var(--success-bg);
+            border-color: var(--success-border);
+        }
+
+        .verification-box.warning {
+            background: #fff8e1;
+            border-color: #e6c200;
+        }
+
+        .verification-box h3 {
+            font-size: 17px;
+            margin-bottom: 12px;
+        }
+
+        .verification-box.ok h3 {
+            color: var(--success-text);
+        }
+
+        .verification-box.warning h3 {
+            color: #7a5c00;
+        }
+
+        .verification-box ul {
+            margin: 8px 0 0 20px;
+            color: #333333;
+        }
+
+        .verification-box li {
+            margin-bottom: 8px;
+            line-height: 1.5;
+        }
+
+        .verification-box .campo-fallido {
+            font-weight: 700;
+        }
+
+        .verification-box .reporte-ia {
+            margin-top: 16px;
+            padding-top: 16px;
+            border-top: 1px solid rgba(0, 0, 0, 0.15);
+            white-space: pre-wrap;
+            color: #333333;
+        }
+
+        .page-footer {
+            padding: 20px 24px;
+            text-align: center;
+            font-size: 14px;
+            color: var(--gray);
+            border-top: 1px solid var(--light-gray);
+        }
+
+        @media (max-width: 600px) {
+            .page-header {
+                padding: 24px 16px;
+            }
+
+            .page-header h1 {
+                font-size: 22px;
+            }
+
+            .content {
+                padding: 24px 16px;
+            }
+
+            .btn-generate,
+            .btn-reset {
+                max-width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="page">
+        <header class="page-header">
+            <h1>Ayuntamiento de Cuernavaca</h1>
+            <p>Generador de Documentos de Prescripción Fiscal</p>
+        </header>
+
+        <main class="content">
+            <p class="instructions">
+                <strong>Instrucciones:</strong> Complete todos los campos con los datos del caso. Al presionar
+                "Generar Documento", el archivo Word se descargará automáticamente con la información capturada.
+            </p>
+
+            <form id="form">
+                <section class="section">
+                    <h2>Destinatario</h2>
+
+                    <div class="field">
+                        <label for="representante">Nombre del Representante Legal</label>
+                        <input type="text" id="representante" placeholder="PEDRO PÉREZ FLORES" required>
+                        <p class="help-text">Escribir en MAYÚSCULAS</p>
+                    </div>
+
+                    <div class="field">
+                        <label for="folioExpediente1">Parte 1 del Folio del Expediente</label>
+                        <input type="text" id="folioExpediente1" inputmode="numeric" pattern="[0-9]*" placeholder="07" required>
+                        <p class="help-text">Solo números</p>
+                    </div>
+
+                    <div class="field">
+                        <label for="folioExpediente2">Parte 2 del Folio del Expediente</label>
+                        <input type="text" id="folioExpediente2" inputmode="numeric" pattern="[0-9]*" placeholder="07" required>
+                        <p class="help-text">Solo números. Ejemplo de resultado: TM/PRESCRIPCIÓN/07/111/2026</p>
+                    </div>
+
+                    <div class="field">
+                        <label for="fechaPeticion">Fecha de Petición</label>
+                        <input type="date" id="fechaPeticion" required>
+                        <p class="help-text">Fecha en que se recibió la petición</p>
+                    </div>
+                </section>
+
+                <section class="section">
+                    <h2>Datos del Inmueble</h2>
+
+                    <div class="field">
+                        <label for="claveAnterior">Clave Catastral Anterior</label>
+                        <input type="text" id="claveAnterior" placeholder="1100 09 119 041" required>
+                        <p class="help-text">Con espacios: XXXX XX XXX XXX</p>
+                    </div>
+
+                    <div class="field">
+                        <label for="claveActual">Clave Catastral Actual</label>
+                        <input type="text" id="claveActual" placeholder="1109 09 119 041" required>
+                        <p class="help-text">Con espacios: XXXX XX XXX XXX</p>
+                    </div>
+
+                    <div class="field">
+                        <label for="propietario">Nombre del Propietario</label>
+                        <input type="text" id="propietario" placeholder="PEDRO PÉREZ FLORES" required>
+                        <p class="help-text">Escribir en MAYÚSCULAS</p>
+                    </div>
+
+                    <div class="field">
+                        <label for="caracterSolicitante">Carácter del Solicitante</label>
+                        <select id="caracterSolicitante" required>
+                            <option value="PROPIETARIO" selected>Propietario</option>
+                            <option value="IMPUESTOS">Interesado en cubrir los adeudos fiscales por concepto de Impuesto Predial y Servicios Públicos Municipales</option>
+                        </select>
+                        <p class="help-text">Cómo se identifica al solicitante en el cuadro SOLICITANTE</p>
+                    </div>
+                </section>
+
+                <section class="section">
+                    <h2>Adeudo — Impuesto Predial</h2>
+
+                    <div class="field">
+                        <label for="predialInicio">Período de Inicio</label>
+                        <input type="text" id="predialInicio" placeholder="1/2011" required>
+                        <p class="help-text">Formato número/año, ejemplo: 1/2011. El período final queda fijo en la plantilla (6/2025)</p>
+                    </div>
+                </section>
+
+                <section class="section">
+                    <h2>Adeudo — Servicios Públicos Municipales</h2>
+
+                    <div class="field">
+                        <label for="serviciosInicio">Período de Inicio</label>
+                        <input type="text" id="serviciosInicio" placeholder="1/2011" required>
+                        <p class="help-text">Formato número/año, ejemplo: 1/2011. El período final queda fijo en la plantilla (6/2025)</p>
+                    </div>
+                </section>
+
+                <section class="section">
+                    <h2>Fecha de Ejecución en el Sistema</h2>
+
+                    <div class="field">
+                        <label for="fechaEjecucion">Fecha de Ejecución</label>
+                        <input type="date" id="fechaEjecucion" required>
+                        <p class="help-text">Se convierte automáticamente a palabras en el documento</p>
+                    </div>
+                </section>
+
+                <div class="actions">
+                    <button type="submit" class="btn-generate">GENERAR DOCUMENTO</button>
+                    <button type="reset" class="btn-reset">Limpiar Formulario</button>
+                </div>
+
+                <div class="loading" id="loading" role="status" aria-live="polite">
+                    Generando documento, por favor espere…
+                </div>
+
+                <div class="message" id="message" role="status" aria-live="polite"></div>
+                <div class="verification-box" id="verificacion" aria-live="polite"></div>
+            </form>
+        </main>
+
+        <footer class="page-footer">
+            Tesorería Municipal de Cuernavaca — Dirección General de Ingresos y Recaudación
+        </footer>
+    </div>
+
+    <script>
+        const API_URL = 'https://generador-prescripcion.vercel.app/api/generar';
+
+        function base64ADocxBlob(base64) {
+            const binario = atob(base64);
+            const bytes = new Uint8Array(binario.length);
+            for (let i = 0; i < binario.length; i++) {
+                bytes[i] = binario.charCodeAt(i);
+            }
+            return new Blob([bytes], {
+                type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+            });
+        }
+
+        function escapeHtml(texto) {
+            const div = document.createElement('div');
+            div.textContent = texto;
+            return div.innerHTML;
+        }
+
+        function mostrarVerificacion(verificacion) {
+            const box = document.getElementById('verificacion');
+
+            if (!verificacion) {
+                box.style.display = 'none';
+                return;
+            }
+
+            const ok = verificacion.ok || [];
+            const fallidos = verificacion.fallidos || [];
+            const reportes = verificacion.reportes || [];
+            const tieneFallidos = fallidos.length > 0;
+
+            box.className = 'verification-box ' + (tieneFallidos ? 'warning' : 'ok');
+
+            let html = '';
+
+            html += tieneFallidos
+                ? `<h3>Verificación: ${fallidos.length} campo(s) requieren revisión</h3>`
+                : `<h3>Verificación: ${ok.length} campo(s) confirmados correctamente</h3>`;
+
+            if (tieneFallidos) {
+                html += '<ul>';
+                for (const f of fallidos) {
+                    html += `<li><span class="campo-fallido">${escapeHtml(f.campo)}</span> → se esperaba "${escapeHtml(f.valor_esperado)}". ${escapeHtml(f.razon)}</li>`;
+                }
+                html += '</ul>';
+            }
+
+            if (reportes.length) {
+                html += `<div class="reporte-ia">${escapeHtml(reportes.join('\n\n'))}</div>`;
+            }
+
+            box.innerHTML = html;
+            box.style.display = 'block';
+        }
+
+        document.getElementById('form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            const loading = document.getElementById('loading');
+            const message = document.getElementById('message');
+            const verificacionBox = document.getElementById('verificacion');
+            const btn = this.querySelector('.btn-generate');
+
+            const fechaEjecucionIso = document.getElementById('fechaEjecucion').value;
+            const fechaPeticionIso = document.getElementById('fechaPeticion').value;
+            const folioExpediente1 = document.getElementById('folioExpediente1').value.trim();
+            const folioExpediente2 = document.getElementById('folioExpediente2').value.trim();
+            const soloNumeros = /^[0-9]+$/;
+
+            if (!fechaEjecucionIso) {
+                message.className = 'message error';
+                message.textContent = 'La fecha de ejecución es requerida';
+                message.style.display = 'block';
+                verificacionBox.style.display = 'none';
+                return;
+            }
+
+            if (!fechaPeticionIso) {
+                message.className = 'message error';
+                message.textContent = 'La fecha de petición es requerida';
+                message.style.display = 'block';
+                verificacionBox.style.display = 'none';
+                return;
+            }
+
+            if (!soloNumeros.test(folioExpediente1) || !soloNumeros.test(folioExpediente2)) {
+                message.className = 'message error';
+                message.textContent = 'Las dos partes del folio del expediente son requeridas y deben contener solo números';
+                message.style.display = 'block';
+                verificacionBox.style.display = 'none';
+                return;
+            }
+
+            loading.style.display = 'block';
+            message.style.display = 'none';
+            verificacionBox.style.display = 'none';
+            btn.disabled = true;
+
+            try {
+                const datos = {
+                    representante: document.getElementById('representante').value,
+                    claveAnterior: document.getElementById('claveAnterior').value,
+                    claveActual: document.getElementById('claveActual').value,
+                    propietario: document.getElementById('propietario').value,
+                    caracterSolicitante: document.getElementById('caracterSolicitante').value,
+                    predialInicio: document.getElementById('predialInicio').value,
+                    serviciosInicio: document.getElementById('serviciosInicio').value,
+                    folioExpediente1: folioExpediente1,
+                    folioExpediente2: folioExpediente2,
+                    fechaEjecucion: fechaEjecucionIso,
+                    fechaPeticion: fechaPeticionIso,
+                };
+
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(datos)
+                });
+
+                const resultado = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(resultado.error || 'Error en el servidor');
+                }
+
+                const blob = base64ADocxBlob(resultado.documento_base64);
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = resultado.filename || `Prescripcion_${datos.representante.split(' ')[0]}_${new Date().toISOString().slice(0, 10)}.docx`;
+                link.click();
+                URL.revokeObjectURL(url);
+
+                message.className = 'message success';
+                message.textContent = 'Documento generado exitosamente. Su archivo se está descargando...';
+                message.style.display = 'block';
+
+                mostrarVerificacion(resultado.verificacion);
+
+                setTimeout(() => {
+                    message.style.display = 'none';
+                }, 5000);
+
+            } catch (error) {
+                message.className = 'message error';
+                message.textContent = 'Error: ' + error.message + '. Verifique su conexión a internet.';
+                message.style.display = 'block';
+                console.error('Error:', error);
+            } finally {
+                loading.style.display = 'none';
+                btn.disabled = false;
+            }
+        });
+    </script>
+</body>
+</html>
